@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="MedTrack - A modern medical machine inventory tracker for multi-office healthcare facilities" />
+    <title>MedTrack — Medical Inventory System</title>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Embedded SVG favicon (medical cross monogram) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0f1c'/%3E%3Cpath d='M26 14h12v12h12v12H38v12H26V38H14V26h12z' fill='%2300d9c0'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+    <!-- ============================================================
+         LOADING SCREEN
+         Shown briefly on startup while the app initializes.
+         ============================================================ -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <!-- Animated pulse logo -->
+            <div class="loading-logo">
+                <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                    <rect width="64" height="64" rx="14" fill="var(--surface-2)"/>
+                    <path d="M26 14h12v12h12v12H38v12H26V38H14V26h12z" fill="var(--accent)"/>
+                </svg>
+                <div class="loading-pulse"></div>
+            </div>
+            <h1 class="loading-title">MedTrack</h1>
+            <p class="loading-subtitle">Initializing inventory system…</p>
+            <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         LOGIN SCREEN
+         Passcode entry. Default is "1234" (can be changed in Settings).
+         ============================================================ -->
+    <div id="login-screen" class="login-screen hidden" aria-hidden="true">
+        <div class="login-card">
+            <div class="login-logo">
+                <svg viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
+                    <rect width="64" height="64" rx="14" fill="var(--surface-2)"/>
+                    <path d="M26 14h12v12h12v12H38v12H26V38H14V26h12z" fill="var(--accent)"/>
+                </svg>
+            </div>
+            <h2 class="login-title">MedTrack</h2>
+            <p class="login-subtitle">Enter passcode to continue</p>
+
+            <form id="login-form" class="login-form" autocomplete="off">
+                <!-- Visual passcode dots -->
+                <div class="passcode-dots" id="passcode-dots">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <!-- Hidden actual input (autofocused) -->
+                <input
+                    type="password"
+                    id="passcode-input"
+                    class="passcode-input"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    maxlength="12"
+                    autocomplete="off"
+                    aria-label="Passcode"
+                />
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span>Unlock</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </button>
+                <p class="login-hint">Default passcode is <code>1234</code></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MAIN APPLICATION
+         Visible only after successful login.
+         ============================================================ -->
+    <div id="app" class="app hidden" aria-hidden="true">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <svg viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+                        <rect width="64" height="64" rx="12" fill="var(--surface-2)"/>
+                        <path d="M26 14h12v12h12v12H38v12H26V38H14V26h12z" fill="var(--accent)"/>
+                    </svg>
+                    <div>
+                        <div class="brand-name">MedTrack</div>
+                        <div class="brand-sub">Inventory System</div>
+                    </div>
+                </div>
+                <!-- Mobile close button -->
+                <button class="icon-btn sidebar-close" id="sidebar-close" aria-label="Close menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="dashboard">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="inventory">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+                    <span>Inventory</span>
+                </button>
+                <button class="nav-item" data-view="offices">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+                    <span>Offices</span>
+                </button>
+                <button class="nav-item" data-view="data">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    <span>Data</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="nav-item logout" id="logout-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                    <span>Lock</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main">
+
+            <!-- ===== TOP BAR ===== -->
+            <header class="topbar">
+                <button class="icon-btn sidebar-toggle" id="sidebar-toggle" aria-label="Open menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+
+                <div class="search-wrap">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input
+                        type="search"
+                        id="global-search"
+                        class="search-input"
+                        placeholder="Search by serial, model, maker, or office…"
+                        autocomplete="off"
+                    />
+                    <kbd class="search-kbd">/</kbd>
+                </div>
+
+                <div class="topbar-actions">
+                    <!-- Office filter -->
+                    <select id="office-filter" class="select office-filter" aria-label="Filter by office">
+                        <option value="all">All Offices</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- ===== VIEW: DASHBOARD ===== -->
+            <section class="view" id="view-dashboard">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Dashboard</h1>
+                        <p class="view-subtitle">Overview of your medical equipment inventory</p>
+                    </div>
+                    <button class="btn btn-primary" data-action="add-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Add Machine</span>
+                    </button>
+                </div>
+
+                <!-- Summary cards -->
+                <div class="summary-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-accent">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Machines</div>
+                            <div class="stat-value" id="stat-total">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Offices</div>
+                            <div class="stat-value" id="stat-offices">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-amber">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Added This Week</div>
+                            <div class="stat-value" id="stat-recent">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-violet">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Unique Makers</div>
+                            <div class="stat-value" id="stat-makers">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent items panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Recently Added</h2>
+                        <button class="btn btn-ghost btn-sm" data-nav="inventory">View all</button>
+                    </div>
+                    <div id="recent-list" class="recent-list">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Per-office breakdown -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Inventory by Office</h2>
+                    </div>
+                    <div id="office-breakdown" class="office-breakdown">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== VIEW: INVENTORY ===== -->
+            <section class="view hidden" id="view-inventory">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Inventory</h1>
+                        <p class="view-subtitle" id="inventory-count-text">Manage all medical equipment</p>
+                    </div>
+                    <div class="view-header-actions">
+                        <select id="sort-select" class="select" aria-label="Sort by">
+                            <option value="dateAdded-desc">Newest first</option>
+                            <option value="dateAdded-asc">Oldest first</option>
+                            <option value="model-asc">Model A → Z</option>
+                            <option value="model-desc">Model Z → A</option>
+                            <option value="maker-asc">Maker A → Z</option>
+                            <option value="serialNumber-asc">Serial A → Z</option>
+                        </select>
+                        <button class="btn btn-primary" data-action="add-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>Add Machine</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table for desktop, cards for mobile (CSS-controlled) -->
+                <div class="panel panel-flush">
+                    <div class="table-wrap">
+                        <table class="inv-table">
+                            <thead>
+                                <tr>
+                                    <th>Serial Number</th>
+                                    <th>Model</th>
+                                    <th>Maker</th>
+                                    <th>Office</th>
+                                    <th>Date Added</th>
+                                    <th>Notes</th>
+                                    <th class="th-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody">
+                                <!-- populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="inventory-cards" class="inv-cards">
+                        <!-- mobile card layout populated by JS -->
+                    </div>
+                    <div id="inventory-empty" class="empty-state hidden">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+                        <h3>No machines yet</h3>
+                        <p>Add your first piece of medical equipment to get started.</p>
+                        <button class="btn btn-primary" data-action="add-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>Add Machine</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== VIEW: OFFICES ===== -->
+            <section class="view hidden" id="view-offices">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Offices</h1>
+                        <p class="view-subtitle">Manage office locations</p>
+                    </div>
+                    <button class="btn btn-primary" data-action="add-office">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>New Office</span>
+                    </button>
+                </div>
+
+                <div id="offices-grid" class="offices-grid">
+                    <!-- populated by JS -->
+                </div>
+
+                <div id="offices-empty" class="empty-state hidden">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+                    <h3>No offices yet</h3>
+                    <p>Create your first office to start adding equipment.</p>
+                    <button class="btn btn-primary" data-action="add-office">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>New Office</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ===== VIEW: DATA (Import/Export/Backup) ===== -->
+            <section class="view hidden" id="view-data">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Data Management</h1>
+                        <p class="view-subtitle">Export, import, and back up your inventory</p>
+                    </div>
+                </div>
+
+                <div class="data-grid">
+                    <!-- CSV Export -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Export to CSV</h2>
+                        </div>
+                        <p class="panel-text">Download all inventory items as a spreadsheet-compatible CSV file.</p>
+                        <button class="btn btn-primary" id="btn-export-csv">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            <span>Download CSV</span>
+                        </button>
+                    </div>
+
+                    <!-- CSV Import -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Import from CSV</h2>
+                        </div>
+                        <p class="panel-text">Upload a CSV file with columns: <code>serialNumber, model, maker, officeName, notes, dateAdded</code>. Unknown offices are created automatically.</p>
+                        <input type="file" id="csv-file-input" accept=".csv,text/csv" hidden />
+                        <button class="btn btn-secondary" id="btn-import-csv">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                            <span>Choose CSV File</span>
+                        </button>
+                    </div>
+
+                    <!-- JSON Backup -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Full Backup (JSON)</h2>
+                        </div>
+                        <p class="panel-text">Download a complete backup of all offices and inventory. Use this for migrations or as a safety snapshot.</p>
+                        <button class="btn btn-primary" id="btn-backup-json">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+                            <span>Download Backup</span>
+                        </button>
+                    </div>
+
+                    <!-- JSON Restore -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Restore from Backup</h2>
+                        </div>
+                        <p class="panel-text panel-text-warn">⚠ This will replace ALL existing offices and inventory with the backup contents.</p>
+                        <input type="file" id="json-file-input" accept=".json,application/json" hidden />
+                        <button class="btn btn-danger" id="btn-restore-json">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8M3 3v5h5"/></svg>
+                            <span>Restore Backup</span>
+                        </button>
+                    </div>
+
+                    <!-- Clear all -->
+                    <div class="panel panel-danger">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Clear All Data</h2>
+                        </div>
+                        <p class="panel-text">Permanently delete all offices, inventory, and reset the passcode. This cannot be undone.</p>
+                        <button class="btn btn-danger" id="btn-clear-all">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            <span>Wipe Everything</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== VIEW: SETTINGS ===== -->
+            <section class="view hidden" id="view-settings">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Settings</h1>
+                        <p class="view-subtitle">Configure your MedTrack instance</p>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Change Passcode</h2>
+                    </div>
+                    <form id="passcode-form" class="form-grid" autocomplete="off">
+                        <div class="form-field">
+                            <label for="current-passcode">Current passcode</label>
+                            <input type="password" id="current-passcode" class="input" inputmode="numeric" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="new-passcode">New passcode</label>
+                            <input type="password" id="new-passcode" class="input" inputmode="numeric" minlength="4" maxlength="12" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="confirm-passcode">Confirm new passcode</label>
+                            <input type="password" id="confirm-passcode" class="input" inputmode="numeric" minlength="4" maxlength="12" required />
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Update Passcode</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">About</h2>
+                    </div>
+                    <dl class="about-list">
+                        <div><dt>Version</dt><dd>1.0.0</dd></div>
+                        <div><dt>Storage</dt><dd>Browser localStorage</dd></div>
+                        <div><dt>Storage used</dt><dd id="storage-used">—</dd></div>
+                        <div><dt>Last activity</dt><dd id="last-activity">—</dd></div>
+                    </dl>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ============================================================
+         MODALS
+         ============================================================ -->
+
+    <!-- Add / Edit inventory item modal -->
+    <div class="modal" id="item-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog" role="dialog" aria-labelledby="item-modal-title" aria-modal="true">
+            <header class="modal-header">
+                <h2 id="item-modal-title">Add Machine</h2>
+                <button class="icon-btn" data-close-modal aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </header>
+            <form id="item-form" class="modal-body" autocomplete="off">
+                <input type="hidden" id="item-id" />
+
+                <div class="form-grid form-grid-2">
+                    <div class="form-field">
+                        <label for="item-serial">Serial Number *</label>
+                        <input type="text" id="item-serial" class="input" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="item-model">Model *</label>
+                        <input type="text" id="item-model" class="input" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="item-maker">Maker / Manufacturer *</label>
+                        <input type="text" id="item-maker" class="input" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="item-office">Office Location *</label>
+                        <select id="item-office" class="select" required>
+                            <option value="">— Select an office —</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="item-date">Date Added</label>
+                        <input type="date" id="item-date" class="input" />
+                    </div>
+                    <div class="form-field form-field-full">
+                        <label for="item-notes">Notes</label>
+                        <textarea id="item-notes" class="input" rows="4" placeholder="Service history, warranty info, calibration notes…"></textarea>
+                    </div>
+                </div>
+
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="item-save-btn">Save Machine</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add / Edit office modal -->
+    <div class="modal" id="office-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-dialog-sm" role="dialog" aria-labelledby="office-modal-title" aria-modal="true">
+            <header class="modal-header">
+                <h2 id="office-modal-title">New Office</h2>
+                <button class="icon-btn" data-close-modal aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </header>
+            <form id="office-form" class="modal-body" autocomplete="off">
+                <input type="hidden" id="office-id" />
+                <div class="form-field">
+                    <label for="office-name">Office name *</label>
+                    <input type="text" id="office-name" class="input" required placeholder="e.g. Downtown Clinic" />
+                </div>
+                <div class="form-field">
+                    <label for="office-address">Address (optional)</label>
+                    <input type="text" id="office-address" class="input" placeholder="123 Main St, Suite 200" />
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Office</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm dialog (delete, wipe, restore) -->
+    <div class="modal" id="confirm-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-dialog-sm" role="alertdialog" aria-labelledby="confirm-title" aria-modal="true">
+            <header class="modal-header">
+                <h2 id="confirm-title">Are you sure?</h2>
+                <button class="icon-btn" data-close-modal aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p id="confirm-message">This action cannot be undone.</p>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TOAST CONTAINER
+         JS injects individual toast notifications here.
+         ============================================================ -->
+    <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Application script -->
+    <script src="script.js" defer></script>
+</body>
+</html>
